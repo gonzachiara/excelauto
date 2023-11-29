@@ -1,6 +1,8 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import openpyxl
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 import os
 
 class ProgramaExcel:
@@ -31,6 +33,10 @@ class ProgramaExcel:
 
         # Ruta completa al archivo Excel
         self.archivo_excel = os.path.join(os.getcwd(), 'datos.xlsx')
+
+        # Crear un botón para convertir a PDF
+        self.pdf_button = ttk.Button(root, text="Convertir a PDF", command=self.convertir_a_pdf)
+        self.pdf_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
         # Actualizar la vista previa al iniciar
         self.actualizar_vista_previa()
@@ -86,6 +92,33 @@ class ProgramaExcel:
 
         # Actualizar la vista previa
         self.actualizar_vista_previa()
+
+    def convertir_a_pdf(self):
+        # Obtener los datos del archivo Excel
+        try:
+            libro = openpyxl.load_workbook(self.archivo_excel)
+            hoja = libro.active
+            datos = [fila[0].value for fila in hoja.iter_rows(min_row=2, max_col=1, max_row=hoja.max_row)]
+        except FileNotFoundError:
+            # Si el archivo no existe, mostrar un mensaje de error
+            messagebox.showerror("Error", "El archivo Excel no existe. Por favor, agréguele datos primero.")
+            return
+
+        # Crear el archivo PDF con el mismo nombre que el archivo Excel
+        pdf_filename = os.path.splitext(self.archivo_excel)[0] + ".pdf"
+        c = canvas.Canvas(pdf_filename, pagesize=letter)
+
+        # Escribir los datos en el PDF
+        y_position = 750
+        for dato in datos:
+            c.drawString(100, y_position, dato)
+            y_position -= 12
+
+        # Guardar y cerrar el archivo PDF
+        c.save()
+
+        # Mostrar un mensaje de éxito
+        messagebox.showinfo("Éxito", f"El archivo PDF se ha creado con éxito: {pdf_filename}")
 
     def actualizar_vista_previa(self):
         # Cargar el archivo Excel y obtener los datos
